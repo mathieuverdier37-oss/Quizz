@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1117">
+<title>MémoMaster</title>
+<link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk3DqW1vTWFzdGVyIiwKICAic2hvcnRfbmFtZSI6ICJNw6ltb01hc3RlciIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGYxMTE3IiwKICAidGhlbWVfY29sb3IiOiAiI2U4YzU0NyIsCiAgImljb25zIjogW10KfQ==">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f1117; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+  #root { min-height: 100vh; }
+  input { -webkit-appearance: none; appearance: none; }
+  button { -webkit-tap-highlight-color: transparent; }
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.5/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const CATEGORIES = {
+  departements: {
+    title: "Départements français",
+    icon: "🗺️",
+    description: "Numéro → Nom du département",
+    items: [
+      ["01","Ain"],["02","Aisne"],["03","Allier"],["04","Alpes-de-Haute-Provence"],["05","Hautes-Alpes"],
+      ["06","Alpes-Maritimes"],["07","Ardèche"],["08","Ardennes"],["09","Ariège"],["10","Aube"],
+      ["11","Aude"],["12","Aveyron"],["13","Bouches-du-Rhône"],["14","Calvados"],["15","Cantal"],
+      ["16","Charente"],["17","Charente-Maritime"],["18","Cher"],["19","Corrèze"],["2A","Corse-du-Sud"],
+      ["2B","Haute-Corse"],["21","Côte-d'Or"],["22","Côtes-d'Armor"],["23","Creuse"],["24","Dordogne"],
+      ["25","Doubs"],["26","Drôme"],["27","Eure"],["28","Eure-et-Loir"],["29","Finistère"],
+      ["30","Gard"],["31","Haute-Garonne"],["32","Gers"],["33","Gironde"],["34","Hérault"],
+      ["35","Ille-et-Vilaine"],["36","Indre"],["37","Indre-et-Loire"],["38","Isère"],["39","Jura"],
+      ["40","Landes"],["41","Loir-et-Cher"],["42","Loire"],["43","Haute-Loire"],["44","Loire-Atlantique"],
+      ["45","Loiret"],["46","Lot"],["47","Lot-et-Garonne"],["48","Lozère"],["49","Maine-et-Loire"],
+      ["50","Manche"],["51","Marne"],["52","Haute-Marne"],["53","Mayenne"],["54","Meurthe-et-Moselle"],
+      ["55","Meuse"],["56","Morbihan"],["57","Moselle"],["58","Nièvre"],["59","Nord"],
+      ["60","Oise"],["61","Orne"],["62","Pas-de-Calais"],["63","Puy-de-Dôme"],["64","Pyrénées-Atlantiques"],
+      ["65","Hautes-Pyrénées"],["66","Pyrénées-Orientales"],["67","Bas-Rhin"],["68","Haut-Rhin"],["69","Rhône"],
+      ["70","Haute-Saône"],["71","Saône-et-Loire"],["72","Sarthe"],["73","Savoie"],["74","Haute-Savoie"],
+      ["75","Paris"],["76","Seine-Maritime"],["77","Seine-et-Marne"],["78","Yvelines"],["79","Deux-Sèvres"],
+      ["80","Somme"],["81","Tarn"],["82","Tarn-et-Garonne"],["83","Var"],["84","Vaucluse"],
+      ["85","Vendée"],["86","Vienne"],["87","Haute-Vienne"],["88","Vosges"],["89","Yonne"],
+      ["90","Territoire de Belfort"],["91","Essonne"],["92","Hauts-de-Seine"],["93","Seine-Saint-Denis"],["94","Val-de-Marne"],
+      ["95","Val-d'Oise"],["971","Guadeloupe"],["972","Martinique"],["973","Guyane"],["974","La Réunion"],["976","Mayotte"]
+    ]
+  },
+  prefectures: {
+    title: "Préfectures",
+    icon: "🏛️",
+    description: "Département → Préfecture",
+    items: [
+      ["Ain","Bourg-en-Bresse"],["Aisne","Laon"],["Allier","Moulins"],["Alpes-de-Haute-Provence","Digne-les-Bains"],
+      ["Hautes-Alpes","Gap"],["Alpes-Maritimes","Nice"],["Ardèche","Privas"],["Ardennes","Charleville-Mézières"],
+      ["Ariège","Foix"],["Aube","Troyes"],["Aude","Carcassonne"],["Aveyron","Rodez"],
+      ["Bouches-du-Rhône","Marseille"],["Calvados","Caen"],["Cantal","Aurillac"],["Charente","Angoulême"],
+      ["Charente-Maritime","La Rochelle"],["Cher","Bourges"],["Corrèze","Tulle"],["Corse-du-Sud","Ajaccio"],
+      ["Haute-Corse","Bastia"],["Côte-d'Or","Dijon"],["Côtes-d'Armor","Saint-Brieuc"],["Creuse","Guéret"],
+      ["Dordogne","Périgueux"],["Doubs","Besançon"],["Drôme","Valence"],["Eure","Évreux"],
+      ["Eure-et-Loir","Chartres"],["Finistère","Quimper"],["Gard","Nîmes"],["Haute-Garonne","Toulouse"],
+      ["Gers","Auch"],["Gironde","Bordeaux"],["Hérault","Montpellier"],["Ille-et-Vilaine","Rennes"],
+      ["Indre","Châteauroux"],["Indre-et-Loire","Tours"],["Isère","Grenoble"],["Jura","Lons-le-Saunier"],
+      ["Landes","Mont-de-Marsan"],["Loir-et-Cher","Blois"],["Loire","Saint-Étienne"],["Haute-Loire","Le Puy-en-Velay"],
+      ["Loire-Atlantique","Nantes"],["Loiret","Orléans"],["Lot","Cahors"],["Lot-et-Garonne","Agen"],
+      ["Lozère","Mende"],["Maine-et-Loire","Angers"],["Manche","Saint-Lô"],["Marne","Châlons-en-Champagne"],
+      ["Haute-Marne","Chaumont"],["Mayenne","Laval"],["Meurthe-et-Moselle","Nancy"],["Meuse","Bar-le-Duc"],
+      ["Morbihan","Vannes"],["Moselle","Metz"],["Nièvre","Nevers"],["Nord","Lille"],
+      ["Oise","Beauvais"],["Orne","Alençon"],["Pas-de-Calais","Arras"],["Puy-de-Dôme","Clermont-Ferrand"],
+      ["Pyrénées-Atlantiques","Pau"],["Hautes-Pyrénées","Tarbes"],["Pyrénées-Orientales","Perpignan"],
+      ["Bas-Rhin","Strasbourg"],["Haut-Rhin","Colmar"],["Rhône","Lyon"],["Haute-Saône","Vesoul"],
+      ["Saône-et-Loire","Mâcon"],["Sarthe","Le Mans"],["Savoie","Chambéry"],["Haute-Savoie","Annecy"],
+      ["Paris","Paris"],["Seine-Maritime","Rouen"],["Seine-et-Marne","Melun"],["Yvelines","Versailles"],
+      ["Deux-Sèvres","Niort"],["Somme","Amiens"],["Tarn","Albi"],["Tarn-et-Garonne","Montauban"],
+      ["Var","Toulon"],["Vaucluse","Avignon"],["Vendée","La Roche-sur-Yon"],["Vienne","Poitiers"],
+      ["Haute-Vienne","Limoges"],["Vosges","Épinal"],["Yonne","Auxerre"],["Territoire de Belfort","Belfort"],
+      ["Essonne","Évry-Courcouronnes"],["Hauts-de-Seine","Nanterre"],["Seine-Saint-Denis","Bobigny"],
+      ["Val-de-Marne","Créteil"],["Val-d'Oise","Cergy-Pontoise"]
+    ]
+  },
+  capitales_europe: {
+    title: "Capitales d'Europe",
+    icon: "🇪🇺",
+    description: "Pays → Capitale",
+    items: [
+      ["Albanie","Tirana"],["Allemagne","Berlin"],["Andorre","Andorre-la-Vieille"],["Arménie","Erevan"],
+      ["Autriche","Vienne"],["Azerbaïdjan","Bakou"],["Belgique","Bruxelles"],["Biélorussie","Minsk"],
+      ["Bosnie-Herzégovine","Sarajevo"],["Bulgarie","Sofia"],["Chypre","Nicosie"],["Croatie","Zagreb"],
+      ["Danemark","Copenhague"],["Espagne","Madrid"],["Estonie","Tallinn"],["Finlande","Helsinki"],
+      ["France","Paris"],["Géorgie","Tbilissi"],["Grèce","Athènes"],["Hongrie","Budapest"],
+      ["Irlande","Dublin"],["Islande","Reykjavik"],["Italie","Rome"],["Kazakhstan","Astana"],
+      ["Kosovo","Pristina"],["Lettonie","Riga"],["Liechtenstein","Vaduz"],["Lituanie","Vilnius"],
+      ["Luxembourg","Luxembourg"],["Macédoine du Nord","Skopje"],["Malte","La Valette"],["Moldavie","Chișinău"],
+      ["Monaco","Monaco"],["Monténégro","Podgorica"],["Norvège","Oslo"],["Pays-Bas","Amsterdam"],
+      ["Pologne","Varsovie"],["Portugal","Lisbonne"],["Roumanie","Bucarest"],["Royaume-Uni","Londres"],
+      ["Russie","Moscou"],["Saint-Marin","Saint-Marin"],["Serbie","Belgrade"],["Slovaquie","Bratislava"],
+      ["Slovénie","Ljubljana"],["Suède","Stockholm"],["Suisse","Berne"],["Tchéquie","Prague"],
+      ["Turquie","Ankara"],["Ukraine","Kiev"],["Vatican","Vatican"]
+    ]
+  },
+  capitales_monde: {
+    title: "Capitales du monde",
+    icon: "🌍",
+    description: "Pays → Capitale",
+    items: [
+      ["Afghanistan","Kaboul"],["Afrique du Sud","Pretoria"],["Algérie","Alger"],["Angola","Luanda"],
+      ["Arabie saoudite","Riyad"],["Argentine","Buenos Aires"],["Australie","Canberra"],["Brésil","Brasília"],
+      ["Cameroun","Yaoundé"],["Canada","Ottawa"],["Chili","Santiago"],["Chine","Pékin"],
+      ["Colombie","Bogota"],["Corée du Nord","Pyongyang"],["Corée du Sud","Séoul"],["Costa Rica","San José"],
+      ["Côte d'Ivoire","Yamoussoukro"],["Cuba","La Havane"],["Égypte","Le Caire"],["Émirats arabes unis","Abou Dabi"],
+      ["Équateur","Quito"],["Éthiopie","Addis-Abeba"],["Ghana","Accra"],["Inde","New Delhi"],
+      ["Indonésie","Jakarta"],["Irak","Bagdad"],["Iran","Téhéran"],["Israël","Jérusalem"],
+      ["Jamaïque","Kingston"],["Japon","Tokyo"],["Jordanie","Amman"],["Kenya","Nairobi"],
+      ["Liban","Beyrouth"],["Libye","Tripoli"],["Madagascar","Antananarivo"],["Malaisie","Kuala Lumpur"],
+      ["Mali","Bamako"],["Maroc","Rabat"],["Mexique","Mexico"],["Mongolie","Oulan-Bator"],
+      ["Mozambique","Maputo"],["Myanmar","Naypyidaw"],["Népal","Katmandou"],["Nicaragua","Managua"],
+      ["Nigeria","Abuja"],["Nouvelle-Zélande","Wellington"],["Ouganda","Kampala"],["Pakistan","Islamabad"],
+      ["Pérou","Lima"],["Philippines","Manille"],["RD Congo","Kinshasa"],["Sénégal","Dakar"],
+      ["Singapour","Singapour"],["Soudan","Khartoum"],["Sri Lanka","Sri Jayawardenepura-Kotte"],
+      ["Syrie","Damas"],["Tanzanie","Dodoma"],["Thaïlande","Bangkok"],["Tunisie","Tunis"],
+      ["États-Unis","Washington"],["Uruguay","Montevideo"],["Venezuela","Caracas"],["Viêt Nam","Hanoï"],
+      ["Zimbabwe","Harare"]
+    ]
+  },
+  presidents_fr: {
+    title: "Présidents de la Vᵉ République",
+    icon: "🇫🇷",
+    description: "Mandat → Président",
+    items: [
+      ["1959–1969","Charles de Gaulle"],["1969–1974","Georges Pompidou"],["1974–1981","Valéry Giscard d'Estaing"],
+      ["1981–1995","François Mitterrand"],["1995–2007","Jacques Chirac"],["2007–2012","Nicolas Sarkozy"],
+      ["2012–2017","François Hollande"],["2017–2027","Emmanuel Macron"]
+    ]
+  },
+  rois_france: {
+    title: "Rois de France (Capétiens directs)",
+    icon: "👑",
+    description: "Période → Roi",
+    items: [
+      ["987–996","Hugues Capet"],["996–1031","Robert II le Pieux"],["1031–1060","Henri Iᵉʳ"],
+      ["1060–1108","Philippe Iᵉʳ"],["1108–1137","Louis VI le Gros"],["1137–1180","Louis VII le Jeune"],
+      ["1180–1223","Philippe II Auguste"],["1223–1226","Louis VIII le Lion"],["1226–1270","Louis IX (Saint Louis)"],
+      ["1270–1285","Philippe III le Hardi"],["1285–1314","Philippe IV le Bel"],["1314–1316","Louis X le Hutin"],
+      ["1316","Jean Iᵉʳ le Posthume"],["1316–1322","Philippe V le Long"],["1322–1328","Charles IV le Bel"]
+    ]
+  },
+  nobel_physique: {
+    title: "Prix Nobel de physique (sélection)",
+    icon: "⚛️",
+    description: "Année → Lauréat(s)",
+    items: [
+      ["1903","Pierre et Marie Curie, Henri Becquerel"],["1921","Albert Einstein"],["1922","Niels Bohr"],
+      ["1932","Werner Heisenberg"],["1933","Erwin Schrödinger, Paul Dirac"],["1945","Wolfgang Pauli"],
+      ["1954","Max Born"],["1965","Richard Feynman, Julian Schwinger, Sin-Itiro Tomonaga"],
+      ["1969","Murray Gell-Mann"],["1979","Sheldon Glashow, Abdus Salam, Steven Weinberg"],
+      ["1999","Gerard 't Hooft, Martinus Veltman"],["2004","David Gross, Frank Wilczek, David Politzer"],
+      ["2012","Serge Haroche, David Wineland"],["2013","François Englert, Peter Higgs"],
+      ["2020","Roger Penrose, Reinhard Genzel, Andrea Ghez"],["2022","Alain Aspect, John Clauser, Anton Zeilinger"]
+    ]
+  },
+  nobel_litterature: {
+    title: "Prix Nobel de littérature (sélection)",
+    icon: "📚",
+    description: "Année → Lauréat",
+    items: [
+      ["1901","Sully Prudhomme"],["1907","Rudyard Kipling"],["1913","Rabindranath Tagore"],
+      ["1915","Romain Rolland"],["1921","Anatole France"],["1947","André Gide"],
+      ["1952","François Mauriac"],["1954","Ernest Hemingway"],["1957","Albert Camus"],
+      ["1960","Saint-John Perse"],["1964","Jean-Paul Sartre (refusé)"],["1969","Samuel Beckett"],
+      ["1971","Pablo Neruda"],["1982","Gabriel García Márquez"],["1985","Claude Simon"],
+      ["2000","Gao Xingjian"],["2008","J.M.G. Le Clézio"],["2014","Patrick Modiano"],
+      ["2016","Bob Dylan"],["2022","Annie Ernaux"]
+    ]
+  },
+  elements_chimiques: {
+    title: "Éléments chimiques (Z 1–36)",
+    icon: "🧪",
+    description: "Numéro atomique → Élément (Symbole)",
+    items: [
+      ["1","Hydrogène (H)"],["2","Hélium (He)"],["3","Lithium (Li)"],["4","Béryllium (Be)"],
+      ["5","Bore (B)"],["6","Carbone (C)"],["7","Azote (N)"],["8","Oxygène (O)"],
+      ["9","Fluor (F)"],["10","Néon (Ne)"],["11","Sodium (Na)"],["12","Magnésium (Mg)"],
+      ["13","Aluminium (Al)"],["14","Silicium (Si)"],["15","Phosphore (P)"],["16","Soufre (S)"],
+      ["17","Chlore (Cl)"],["18","Argon (Ar)"],["19","Potassium (K)"],["20","Calcium (Ca)"],
+      ["21","Scandium (Sc)"],["22","Titane (Ti)"],["23","Vanadium (V)"],["24","Chrome (Cr)"],
+      ["25","Manganèse (Mn)"],["26","Fer (Fe)"],["27","Cobalt (Co)"],["28","Nickel (Ni)"],
+      ["29","Cuivre (Cu)"],["30","Zinc (Zn)"],["31","Gallium (Ga)"],["32","Germanium (Ge)"],
+      ["33","Arsenic (As)"],["34","Sélénium (Se)"],["35","Brome (Br)"],["36","Krypton (Kr)"]
+    ]
+  },
+  fleuves_france: {
+    title: "Fleuves et rivières de France",
+    icon: "🌊",
+    description: "Cours d'eau → Longueur (km) & Embouchure",
+    items: [
+      ["Loire","1 012 km — Océan Atlantique"],["Seine","776 km — Manche"],["Rhône","812 km — Méditerranée"],
+      ["Garonne","647 km — Océan Atlantique (Gironde)"],["Meuse","950 km — Mer du Nord"],
+      ["Rhin","1 233 km — Mer du Nord"],["Dordogne","483 km — Gironde"],["Saône","480 km — Rhône (Lyon)"],
+      ["Marne","514 km — Seine"],["Allier","421 km — Loire"],["Lot","485 km — Garonne"],
+      ["Charente","381 km — Océan Atlantique"],["Adour","309 km — Océan Atlantique"],
+      ["Somme","245 km — Manche"],["Hérault","148 km — Méditerranée"],["Vilaine","218 km — Océan Atlantique"],
+      ["Cher","367 km — Loire"],["Vienne","372 km — Loire"],["Isère","286 km — Rhône"],
+      ["Oise","341 km — Seine"]
+    ]
+  },
+  // ─── NOUVELLES CATÉGORIES « JEUX TÉLÉVISÉS » ─────────────────────────────
+  jo_ete: {
+    title: "Villes des JO d'été",
+    icon: "🏅",
+    description: "Année → Ville hôte",
+    items: [
+      ["1896","Athènes"],["1900","Paris"],["1904","Saint-Louis"],["1908","Londres"],["1912","Stockholm"],
+      ["1920","Anvers"],["1924","Paris"],["1928","Amsterdam"],["1932","Los Angeles"],["1936","Berlin"],
+      ["1948","Londres"],["1952","Helsinki"],["1956","Melbourne"],["1960","Rome"],["1964","Tokyo"],
+      ["1968","Mexico"],["1972","Munich"],["1976","Montréal"],["1980","Moscou"],["1984","Los Angeles"],
+      ["1988","Séoul"],["1992","Barcelone"],["1996","Atlanta"],["2000","Sydney"],["2004","Athènes"],
+      ["2008","Pékin"],["2012","Londres"],["2016","Rio de Janeiro"],["2020","Tokyo"],["2024","Paris"],
+      ["2028","Los Angeles"],["2032","Brisbane"]
+    ]
+  },
+  jo_hiver: {
+    title: "Villes des JO d'hiver",
+    icon: "⛷️",
+    description: "Année → Ville hôte",
+    items: [
+      ["1924","Chamonix"],["1928","Saint-Moritz"],["1932","Lake Placid"],["1936","Garmisch-Partenkirchen"],
+      ["1948","Saint-Moritz"],["1952","Oslo"],["1956","Cortina d'Ampezzo"],["1960","Squaw Valley"],
+      ["1964","Innsbruck"],["1968","Grenoble"],["1972","Sapporo"],["1976","Innsbruck"],
+      ["1980","Lake Placid"],["1984","Sarajevo"],["1988","Calgary"],["1992","Albertville"],
+      ["1994","Lillehammer"],["1998","Nagano"],["2002","Salt Lake City"],["2006","Turin"],
+      ["2010","Vancouver"],["2014","Sotchi"],["2018","Pyeongchang"],["2022","Pékin"],
+      ["2026","Milan-Cortina"]
+    ]
+  },
+  goncourt: {
+    title: "Prix Goncourt",
+    icon: "🏆",
+    description: "Année → Lauréat — Œuvre",
+    items: [
+      ["1903","John-Antoine Nau — Force ennemie"],
+      ["1919","Marcel Proust — À l'ombre des jeunes filles en fleurs"],
+      ["1932","Guy Mazeline — Les Loups"],
+      ["1933","André Malraux — La Condition humaine"],
+      ["1938","Henri Troyat — L'Araigne"],
+      ["1944","Elsa Triolet — Le Premier Accroc coûte 200 francs"],
+      ["1949","Robert Merle — Week-end à Zuydcoote"],
+      ["1954","Simone de Beauvoir — Les Mandarins"],
+      ["1956","Romain Gary — Les Racines du ciel"],
+      ["1966","Edmonde Charles-Roux — Oublier Palerme"],
+      ["1970","Michel Tournier — Le Roi des Aulnes"],
+      ["1975","Émile Ajar (Romain Gary) — La Vie devant soi"],
+      ["1984","Marguerite Duras — L'Amant"],
+      ["1987","Tahar Ben Jelloun — La Nuit sacrée"],
+      ["1992","Patrick Chamoiseau — Texaco"],
+      ["1999","Jean Echenoz — Je m'en vais"],
+      ["2004","Laurent Gaudé — Le Soleil des Scorta"],
+      ["2006","Jonathan Littell — Les Bienveillantes"],
+      ["2008","Atiq Rahimi — Syngué sabour"],
+      ["2010","Michel Houellebecq — La Carte et le Territoire"],
+      ["2013","Pierre Lemaitre — Au revoir là-haut"],
+      ["2014","Lydie Salvayre — Pas pleurer"],
+      ["2015","Mathias Énard — Boussole"],
+      ["2016","Leïla Slimani — Chanson douce"],
+      ["2017","Éric Vuillard — L'Ordre du jour"],
+      ["2018","Nicolas Mathieu — Leurs enfants après eux"],
+      ["2019","Jean-Paul Dubois — Tous les hommes n'habitent pas le monde de la même façon"],
+      ["2020","Hervé Le Tellier — L'Anomalie"],
+      ["2021","Mohamed Mbougar Sarr — La Plus Secrète Mémoire des hommes"],
+      ["2022","Brigitte Giraud — Vivre vite"],
+      ["2023","Jean-Baptiste Andrea — Veiller sur elle"],
+      ["2024","Kamel Daoud — Houris"]
+    ]
+  },
+  rois_valois: {
+    title: "Rois de France (Valois)",
+    icon: "⚜️",
+    description: "Période → Roi",
+    items: [
+      ["1328–1350","Philippe VI de Valois"],["1350–1364","Jean II le Bon"],
+      ["1364–1380","Charles V le Sage"],["1380–1422","Charles VI le Fou"],
+      ["1422–1461","Charles VII le Victorieux"],["1461–1483","Louis XI"],
+      ["1483–1498","Charles VIII l'Affable"],["1498–1515","Louis XII"],
+      ["1515–1547","François Iᵉʳ"],["1547–1559","Henri II"],
+      ["1559–1560","François II"],["1560–1574","Charles IX"],
+      ["1574–1589","Henri III"]
+    ]
+  },
+  rois_bourbons: {
+    title: "Rois de France (Bourbons)",
+    icon: "👑",
+    description: "Période → Roi",
+    items: [
+      ["1589–1610","Henri IV"],["1610–1643","Louis XIII"],
+      ["1643–1715","Louis XIV (Roi-Soleil)"],["1715–1774","Louis XV le Bien-Aimé"],
+      ["1774–1792","Louis XVI"],["1814–1824","Louis XVIII"],
+      ["1824–1830","Charles X"],["1830–1848","Louis-Philippe Iᵉʳ"]
+    ]
+  },
+  empereurs_france: {
+    title: "Empereurs de France",
+    icon: "🦅",
+    description: "Période → Empereur",
+    items: [
+      ["1804–1814","Napoléon Iᵉʳ Bonaparte"],["1815 (Cent-Jours)","Napoléon Iᵉʳ Bonaparte"],
+      ["1852–1870","Napoléon III (Louis-Napoléon Bonaparte)"]
+    ]
+  },
+  dates_histoire_france: {
+    title: "Dates clés — Histoire de France",
+    icon: "📜",
+    description: "Date → Événement",
+    items: [
+      ["481","Clovis, roi des Francs"],["732","Bataille de Poitiers (Charles Martel)"],
+      ["800","Couronnement de Charlemagne"],["987","Hugues Capet, roi de France"],
+      ["1066","Conquête de l'Angleterre par Guillaume le Conquérant"],
+      ["1099","Prise de Jérusalem (1ʳᵉ croisade)"],["1214","Bataille de Bouvines"],
+      ["1337","Début de la Guerre de Cent Ans"],["1431","Jeanne d'Arc brûlée à Rouen"],
+      ["1453","Fin de la Guerre de Cent Ans"],["1515","Bataille de Marignan"],
+      ["1539","Ordonnance de Villers-Cotterêts (français langue officielle)"],
+      ["1572","Massacre de la Saint-Barthélemy"],["1598","Édit de Nantes"],
+      ["1610","Assassinat d'Henri IV"],["1643","Début du règne de Louis XIV"],
+      ["1685","Révocation de l'Édit de Nantes"],["14 juillet 1789","Prise de la Bastille"],
+      ["1789","Déclaration des Droits de l'Homme et du Citoyen"],
+      ["1792","Proclamation de la Première République"],["1793","Exécution de Louis XVI"],
+      ["1804","Sacre de Napoléon Iᵉʳ"],["1815","Bataille de Waterloo"],
+      ["1848","Abolition de l'esclavage (Schœlcher)"],["1870","Chute du Second Empire, IIIᵉ République"],
+      ["1871","La Commune de Paris"],["1894","Affaire Dreyfus"],
+      ["1905","Loi de séparation des Églises et de l'État"],["1914","Début de la Première Guerre mondiale"],
+      ["11 novembre 1918","Armistice de la Grande Guerre"],["1936","Front populaire (Léon Blum)"],
+      ["1940","Appel du 18 Juin (de Gaulle)"],["1944","Débarquement en Normandie (6 juin)"],
+      ["1944","Droit de vote des femmes"],["1946","IVᵉ République"],
+      ["1958","Vᵉ République (de Gaulle)"],["1962","Fin de la guerre d'Algérie"],
+      ["Mai 1968","Événements de Mai 68"],["1981","Abolition de la peine de mort"],
+      ["1992","Traité de Maastricht"],["2002","Passage à l'euro"]
+    ]
+  },
+  dates_histoire_monde: {
+    title: "Dates clés — Histoire mondiale",
+    icon: "🌐",
+    description: "Date → Événement",
+    items: [
+      ["-3000","Invention de l'écriture (Mésopotamie)"],
+      ["-776","Premiers Jeux olympiques (Grèce)"],
+      ["-509","Fondation de la République romaine"],
+      ["-44","Assassinat de Jules César"],
+      ["476","Chute de l'Empire romain d'Occident"],
+      ["622","Hégire (début du calendrier musulman)"],
+      ["1453","Chute de Constantinople"],
+      ["1492","Découverte de l'Amérique par Christophe Colomb"],
+      ["1517","95 thèses de Luther (Réforme protestante)"],
+      ["1776","Déclaration d'indépendance des États-Unis"],
+      ["1789","Révolution française"],
+      ["1865","Abolition de l'esclavage aux États-Unis"],
+      ["1869","Ouverture du canal de Suez"],
+      ["1917","Révolution russe"],
+      ["1929","Krach boursier de Wall Street"],
+      ["1939","Début de la Seconde Guerre mondiale"],
+      ["1945","Bombes atomiques sur Hiroshima et Nagasaki"],
+      ["1948","Création de l'État d'Israël"],
+      ["1961","Construction du mur de Berlin"],
+      ["1969","Premier pas sur la Lune (Neil Armstrong)"],
+      ["1989","Chute du mur de Berlin"],
+      ["1991","Dissolution de l'URSS"],
+      ["2001","Attentats du 11 Septembre"]
+    ]
+  },
+  peintres_oeuvres: {
+    title: "Peintres → Œuvres célèbres",
+    icon: "🎨",
+    description: "Œuvre → Peintre",
+    items: [
+      ["La Joconde","Léonard de Vinci"],["La Cène","Léonard de Vinci"],
+      ["Le Plafond de la chapelle Sixtine","Michel-Ange"],["La Création d'Adam","Michel-Ange"],
+      ["La Naissance de Vénus","Sandro Botticelli"],["La Jeune Fille à la perle","Johannes Vermeer"],
+      ["Les Ménines","Diego Vélasquez"],["La Ronde de nuit","Rembrandt"],
+      ["Le Radeau de la Méduse","Théodore Géricault"],["La Liberté guidant le peuple","Eugène Delacroix"],
+      ["Le Déjeuner sur l'herbe","Édouard Manet"],["Impression, soleil levant","Claude Monet"],
+      ["Les Nymphéas","Claude Monet"],["Les Tournesols","Vincent van Gogh"],
+      ["La Nuit étoilée","Vincent van Gogh"],["Les Demoiselles d'Avignon","Pablo Picasso"],
+      ["Guernica","Pablo Picasso"],["La Persistance de la mémoire","Salvador Dalí"],
+      ["Le Cri","Edvard Munch"],["Le Baiser","Gustav Klimt"],
+      ["Composition VIII","Vassily Kandinsky"],["La Trahison des images","René Magritte"],
+      ["Le Fils de l'homme","René Magritte"],["Les Époux Arnolfini","Jan van Eyck"],
+      ["Le Sacre de Napoléon","Jacques-Louis David"],["Un bar aux Folies Bergère","Édouard Manet"],
+      ["La Grande Odalisque","Jean-Auguste-Dominique Ingres"],["Le Penseur","Auguste Rodin"],
+      ["American Gothic","Grant Wood"],["Campbell's Soup Cans","Andy Warhol"]
+    ]
+  },
+  compositeurs: {
+    title: "Compositeurs → Œuvres célèbres",
+    icon: "🎵",
+    description: "Œuvre → Compositeur",
+    items: [
+      ["Les Quatre Saisons","Antonio Vivaldi"],["Le Messie","Georg Friedrich Haendel"],
+      ["Le Clavier bien tempéré","Jean-Sébastien Bach"],["Requiem (Lacrimosa)","Wolfgang Amadeus Mozart"],
+      ["La Flûte enchantée","Wolfgang Amadeus Mozart"],["Symphonie n° 5 (pa-pa-pa-pam)","Ludwig van Beethoven"],
+      ["Symphonie n° 9 (Ode à la joie)","Ludwig van Beethoven"],["Sonate au clair de lune","Ludwig van Beethoven"],
+      ["Nocturnes","Frédéric Chopin"],["La Walkyrie (Chevauchée)","Richard Wagner"],
+      ["Le Lac des cygnes","Piotr Ilitch Tchaïkovski"],["Casse-Noisette","Piotr Ilitch Tchaïkovski"],
+      ["Symphonie du Nouveau Monde","Antonín Dvořák"],["Carmen","Georges Bizet"],
+      ["Boléro","Maurice Ravel"],["Clair de lune (Suite bergamasque)","Claude Debussy"],
+      ["La Mer","Claude Debussy"],["Peer Gynt","Edvard Grieg"],
+      ["Aida","Giuseppe Verdi"],["La Traviata","Giuseppe Verdi"],
+      ["La Bohème","Giacomo Puccini"],["Le Sacre du printemps","Igor Stravinsky"],
+      ["Rhapsody in Blue","George Gershwin"],["Pierre et le Loup","Sergueï Prokofiev"],
+      ["Gymnopédies","Erik Satie"],["Daphnis et Chloé","Maurice Ravel"]
+    ]
+  },
+  mythologie_grecque: {
+    title: "Mythologie grecque",
+    icon: "⚡",
+    description: "Attribut/Domaine → Dieu grec (+ équivalent romain)",
+    items: [
+      ["Roi des dieux, tonnerre","Zeus (Jupiter)"],["Mers et océans","Poséidon (Neptune)"],
+      ["Enfers et monde souterrain","Hadès (Pluton)"],["Sagesse et stratégie","Athéna (Minerve)"],
+      ["Soleil, arts, musique","Apollon (Apollon)"],["Chasse et lune","Artémis (Diane)"],
+      ["Guerre","Arès (Mars)"],["Amour et beauté","Aphrodite (Vénus)"],
+      ["Messager des dieux, voyageurs","Hermès (Mercure)"],["Forge et feu","Héphaïstos (Vulcain)"],
+      ["Vin et fête","Dionysos (Bacchus)"],["Agriculture et moissons","Déméter (Cérès)"],
+      ["Mariage et famille, reine des dieux","Héra (Junon)"],["Foyer et famille","Hestia (Vesta)"],
+      ["Amour (archer ailé)","Éros (Cupidon)"],["Aurore","Éos (Aurore)"],
+      ["Titan portant le ciel","Atlas"],["Titan ayant volé le feu","Prométhée"],
+      ["Héros aux 12 travaux","Héraclès (Hercule)"],["Héros du cheval de Troie","Ulysse (Odysseus)"],
+      ["Héros tueur de Méduse","Persée"],["Héros du Minotaure","Thésée"],
+      ["Héros au talon vulnérable","Achille"],["Musicien descendu aux Enfers","Orphée"]
+    ]
+  },
+  inventions: {
+    title: "Inventions et inventeurs",
+    icon: "💡",
+    description: "Invention → Inventeur & Année",
+    items: [
+      ["Imprimerie à caractères mobiles","Gutenberg (vers 1450)"],
+      ["Télescope","Galilée (1609)"],["Machine à vapeur","James Watt (1769)"],
+      ["Vaccin contre la variole","Edward Jenner (1796)"],["Photographie","Nicéphore Niépce (1826)"],
+      ["Téléphone","Alexander Graham Bell (1876)"],["Ampoule électrique","Thomas Edison (1879)"],
+      ["Automobile","Carl Benz (1886)"],["Cinématographe","Frères Lumière (1895)"],
+      ["Radioactivité","Henri Becquerel (1896)"],["Avion motorisé","Frères Wright (1903)"],
+      ["Théorie de la relativité","Albert Einstein (1905)"],["Pénicilline","Alexander Fleming (1928)"],
+      ["Télévision","John Logie Baird (1926)"],["Nylon","Wallace Carothers (1935)"],
+      ["Bombe atomique","Projet Manhattan (1945)"],["Transistor","Bardeen, Brattain, Shockley (1947)"],
+      ["ADN (structure)","Watson et Crick (1953)"],["Pilule contraceptive","Gregory Pincus (1960)"],
+      ["Internet (ARPANET)","DARPA (1969)"],["World Wide Web","Tim Berners-Lee (1989)"],
+      ["Vaccin ARN messager","Katalin Karikó et Drew Weissman (2005)"],
+      ["Pasteurisation","Louis Pasteur (1863)"],["Dynamite","Alfred Nobel (1867)"],
+      ["Radio","Guglielmo Marconi (1895)"]
+    ]
+  },
+  explorateurs: {
+    title: "Grands explorateurs",
+    icon: "🧭",
+    description: "Explorateur → Découverte/Expédition",
+    items: [
+      ["Marco Polo","Route de la Chine (1271–1295)"],
+      ["Christophe Colomb","Amérique (1492)"],["Vasco de Gama","Route maritime vers l'Inde (1498)"],
+      ["Amerigo Vespucci","Côtes d'Amérique du Sud (1499–1502)"],
+      ["Fernand de Magellan","Premier tour du monde (1519–1522)"],
+      ["Jacques Cartier","Canada (1534)"],["Hernán Cortés","Conquête de l'Empire aztèque (1519)"],
+      ["Francisco Pizarro","Conquête de l'Empire inca (1532)"],
+      ["Francis Drake","Deuxième tour du monde (1577–1580)"],
+      ["Samuel de Champlain","Fondation de Québec (1608)"],
+      ["James Cook","Exploration du Pacifique et Australie (1768–1779)"],
+      ["Lewis et Clark","Exploration de l'Ouest américain (1804–1806)"],
+      ["Roald Amundsen","Pôle Sud (1911)"],["Robert Falcon Scott","Pôle Sud (1912, arrivé second)"],
+      ["Edmund Hillary et Tenzing Norgay","Sommet de l'Everest (1953)"],
+      ["Youri Gagarine","Premier homme dans l'espace (1961)"],
+      ["Neil Armstrong","Premier homme sur la Lune (1969)"],
+      ["Louis-Antoine de Bougainville","Tour du monde (1766–1769)"],
+      ["René-Robert Cavelier de La Salle","Exploration du Mississippi (1682)"]
+    ]
+  },
+  palme_or: {
+    title: "Palme d'or — Cannes",
+    icon: "🎬",
+    description: "Année → Film — Réalisateur",
+    items: [
+      ["1955","Marty — Delbert Mann"],["1961","Viridiana — Luis Buñuel"],
+      ["1963","Le Guépard — Luchino Visconti"],["1966","Un homme et une femme — Claude Lelouch"],
+      ["1969","If... — Lindsay Anderson"],["1974","The Conversation — Francis Ford Coppola"],
+      ["1979","Apocalypse Now — Francis Ford Coppola"],["1983","La Ballade de Narayama — Shōhei Imamura"],
+      ["1987","Sous le soleil de Satan — Maurice Pialat"],["1993","La Leçon de piano — Jane Campion"],
+      ["1994","Pulp Fiction — Quentin Tarantino"],["2000","Dancer in the Dark — Lars von Trier"],
+      ["2002","Le Pianiste — Roman Polanski"],["2004","Fahrenheit 9/11 — Michael Moore"],
+      ["2008","Entre les murs — Laurent Cantet"],["2011","The Tree of Life — Terrence Malick"],
+      ["2013","La Vie d'Adèle — Abdellatif Kechiche"],["2014","Winter Sleep — Nuri Bilge Ceylan"],
+      ["2015","Dheepan — Jacques Audiard"],["2016","Moi, Daniel Blake — Ken Loach"],
+      ["2017","The Square — Ruben Östlund"],["2018","Une affaire de famille — Hirokazu Kore-eda"],
+      ["2019","Parasite — Bong Joon-ho"],["2021","Titane — Julia Ducournau"],
+      ["2022","Sans filtre (Triangle of Sadness) — Ruben Östlund"],
+      ["2023","Anatomie d'une chute — Justine Triet"],
+      ["2024","Anora — Sean Baker"]
+    ]
+  },
+  monnaies: {
+    title: "Monnaies du monde",
+    icon: "💰",
+    description: "Pays → Monnaie",
+    items: [
+      ["États-Unis","Dollar américain (USD)"],["Royaume-Uni","Livre sterling (GBP)"],
+      ["Japon","Yen (JPY)"],["Suisse","Franc suisse (CHF)"],["Chine","Yuan / Renminbi (CNY)"],
+      ["Russie","Rouble (RUB)"],["Inde","Roupie indienne (INR)"],["Brésil","Réal (BRL)"],
+      ["Australie","Dollar australien (AUD)"],["Canada","Dollar canadien (CAD)"],
+      ["Corée du Sud","Won (KRW)"],["Mexique","Peso mexicain (MXN)"],
+      ["Turquie","Livre turque (TRY)"],["Arabie saoudite","Riyal (SAR)"],
+      ["Thaïlande","Baht (THB)"],["Afrique du Sud","Rand (ZAR)"],
+      ["Égypte","Livre égyptienne (EGP)"],["Israël","Shekel (ILS)"],
+      ["Pologne","Zloty (PLN)"],["Suède","Couronne suédoise (SEK)"],
+      ["Norvège","Couronne norvégienne (NOK)"],["Danemark","Couronne danoise (DKK)"],
+      ["Maroc","Dirham (MAD)"],["Argentine","Peso argentin (ARS)"],
+      ["Nigéria","Naira (NGN)"],["Zone euro (20 pays)","Euro (EUR)"]
+    ]
+  },
+  merveilles_monde: {
+    title: "7 Merveilles du monde antique",
+    icon: "🏛️",
+    description: "Merveille → Lieu & Époque",
+    items: [
+      ["Pyramide de Khéops","Gizeh, Égypte (vers -2560)"],
+      ["Jardins suspendus","Babylone, Irak (vers -600)"],
+      ["Statue de Zeus","Olympie, Grèce (vers -435)"],
+      ["Temple d'Artémis","Éphèse, Turquie (vers -550)"],
+      ["Mausolée d'Halicarnasse","Bodrum, Turquie (vers -350)"],
+      ["Colosse de Rhodes","Rhodes, Grèce (vers -290)"],
+      ["Phare d'Alexandrie","Alexandrie, Égypte (vers -280)"]
+    ]
+  },
+  devises_nationales: {
+    title: "Devises nationales",
+    icon: "🔖",
+    description: "Pays → Devise",
+    items: [
+      ["France","Liberté, Égalité, Fraternité"],["États-Unis","In God We Trust"],
+      ["Royaume-Uni","Dieu et mon droit"],["Belgique","L'union fait la force"],
+      ["Suisse","Un pour tous, tous pour un"],["Luxembourg","Mir wëlle bleiwe wat mir sinn"],
+      ["Pays-Bas","Je maintiendrai"],["Espagne","Plus Ultra"],
+      ["Brésil","Ordem e Progresso"],["Inde","Satyameva Jayate (La vérité seule triomphe)"],
+      ["Afrique du Sud","ǃke e꞉ ǀxarra ǁke (L'unité dans la diversité)"],
+      ["Union européenne","In varietate concordia (Unie dans la diversité)"],
+      ["Canada","A Mari Usque Ad Mare (D'un océan à l'autre)"],
+      ["Grèce","Elefthería í Thánatos (La liberté ou la mort)"],
+      ["Indonésie","Bhinneka Tunggal Ika (Unité dans la diversité)"],
+      ["Japon","(pas de devise officielle)"],["Australie","(pas de devise officielle)"],
+      ["Italie","(pas de devise officielle depuis 1946)"]
+    ]
+  },
+  nobel_paix: {
+    title: "Prix Nobel de la paix (sélection)",
+    icon: "🕊️",
+    description: "Année → Lauréat(s)",
+    items: [
+      ["1901","Henry Dunant (fondateur Croix-Rouge)"],["1906","Theodore Roosevelt"],
+      ["1913","Henri La Fontaine"],["1919","Woodrow Wilson"],
+      ["1952","Albert Schweitzer"],["1964","Martin Luther King"],
+      ["1971","Willy Brandt"],["1979","Mère Teresa"],
+      ["1983","Lech Wałęsa"],["1986","Elie Wiesel"],
+      ["1989","Dalaï-Lama (Tenzin Gyatso)"],["1990","Mikhaïl Gorbatchev"],
+      ["1993","Nelson Mandela et Frederik de Klerk"],["1994","Yasser Arafat, Yitzhak Rabin, Shimon Peres"],
+      ["2001","ONU et Kofi Annan"],["2007","Al Gore et GIEC"],
+      ["2009","Barack Obama"],["2014","Malala Yousafzai et Kailash Satyarthi"],
+      ["2018","Denis Mukwege et Nadia Murad"],["2022","Ales Bialiatski, Memorial, CCL Ukraine"]
+    ]
+  }
+};
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+const normalize = (s) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, "").trim();
+
+const checkAnswer = (input, correct) => {
+  const ni = normalize(input);
+  const nc = normalize(correct);
+  if (ni === nc) return "exact";
+  // Accept partial for long answers (e.g. "Pierre et Marie Curie, Henri Becquerel")
+  const parts = nc.split(/[,&]/).map(p => normalize(p.trim()));
+  if (parts.length > 1 && parts.every(p => ni.includes(p))) return "exact";
+  // Accept if main part matches
+  const mainPart = normalize(correct.split("(")[0].split("—")[0].trim());
+  if (ni === mainPart) return "exact";
+  // Levenshtein for typos
+  if (nc.length > 3) {
+    const dist = levenshtein(ni, nc);
+    if (dist <= Math.max(1, Math.floor(nc.length * 0.2))) return "close";
+  }
+  return "wrong";
+};
+
+const levenshtein = (a, b) => {
+  const m = a.length, n = b.length;
+  const d = Array.from({length: m+1}, (_, i) => {
+    const row = new Array(n+1);
+    row[0] = i;
+    return row;
+  });
+  for (let j = 1; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+(a[i-1]!==b[j-1]?1:0));
+  return d[m][n];
+};
+
+const shuffle = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+// ─── STORAGE ────────────────────────────────────────────────────────────────
+const loadProgress = async () => {
+  try {
+    const r = localStorage.getItem("memo-progress");
+    return r ? JSON.parse(r) : {};
+  } catch { return {}; }
+};
+
+const saveProgress = async (progress) => {
+  try {
+    localStorage.setItem("memo-progress", JSON.stringify(progress));
+  } catch {}
+};
+
+// ─── COMPONENTS ─────────────────────────────────────────────────────────────
+
+const FONT_LINK = "https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap";
+
+const COLORS = {
+  bg: "#0f1117",
+  card: "#1a1d27",
+  cardHover: "#22263a",
+  accent: "#e8c547",
+  accentDim: "#b89a2a",
+  green: "#4ade80",
+  greenDim: "#166534",
+  red: "#f87171",
+  redDim: "#7f1d1d",
+  orange: "#fb923c",
+  text: "#e8e8ed",
+  textDim: "#8b8d97",
+  border: "#2a2d3a",
+  inputBg: "#14161f",
+};
+
+function MemoApp() {
+  const [view, setView] = useState("home"); // home | learn | test | results
+  const [catKey, setCatKey] = useState(null);
+  const [progress, setProgress] = useState({});
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.href = FONT_LINK;
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+    loadProgress().then(p => { setProgress(p); setLoaded(true); });
+  }, []);
+
+  const updateProgress = useCallback(async (catKey, itemIndex, correct) => {
+    setProgress(prev => {
+      const next = { ...prev };
+      if (!next[catKey]) next[catKey] = {};
+      const cur = next[catKey][itemIndex] || { correct: 0, attempts: 0, streak: 0, lastSeen: 0 };
+      next[catKey][itemIndex] = {
+        correct: cur.correct + (correct ? 1 : 0),
+        attempts: cur.attempts + 1,
+        streak: correct ? cur.streak + 1 : 0,
+        lastSeen: Date.now(),
+      };
+      saveProgress(next);
+      return next;
+    });
+  }, []);
+
+  const resetCategoryProgress = useCallback(async (key) => {
+    setProgress(prev => {
+      const next = { ...prev };
+      delete next[key];
+      saveProgress(next);
+      return next;
+    });
+  }, []);
+
+  if (!loaded) return (
+    <div style={{ background: COLORS.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p style={{ color: COLORS.textDim, fontFamily: "DM Sans, sans-serif", fontSize: 18 }}>Chargement…</p>
+    </div>
+  );
+
+  return (
+    <div style={{
+      background: COLORS.bg,
+      minHeight: "100vh",
+      fontFamily: "'DM Sans', sans-serif",
+      color: COLORS.text,
+      paddingBottom: 40,
+    }}>
+      {view === "home" && (
+        <HomeView
+          progress={progress}
+          onSelect={(key, mode) => { setCatKey(key); setView(mode); }}
+          onReset={resetCategoryProgress}
+        />
+      )}
+      {view === "learn" && catKey && (
+        <LearnView
+          catKey={catKey}
+          category={CATEGORIES[catKey]}
+          progress={progress[catKey] || {}}
+          onUpdate={(idx, ok) => updateProgress(catKey, idx, ok)}
+          onBack={() => setView("home")}
+        />
+      )}
+      {view === "test" && catKey && (
+        <TestView
+          catKey={catKey}
+          category={CATEGORIES[catKey]}
+          progress={progress[catKey] || {}}
+          onUpdate={(idx, ok) => updateProgress(catKey, idx, ok)}
+          onBack={() => setView("home")}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── CATEGORY GROUPS ────────────────────────────────────────────────────────
+const CAT_GROUPS = [
+  { id: "all", label: "Tout", keys: null },
+  { id: "geo", label: "Géo", keys: ["departements","prefectures","capitales_europe","capitales_monde","fleuves_france","monnaies","devises_nationales"] },
+  { id: "histoire", label: "Histoire", keys: ["rois_france","rois_valois","rois_bourbons","empereurs_france","presidents_fr","dates_histoire_france","dates_histoire_monde","explorateurs"] },
+  { id: "culture", label: "Culture", keys: ["peintres_oeuvres","compositeurs","mythologie_grecque","merveilles_monde"] },
+  { id: "prix", label: "Prix & Palmarès", keys: ["goncourt","nobel_physique","nobel_litterature","nobel_paix","palme_or","jo_ete","jo_hiver"] },
+  { id: "sciences", label: "Sciences", keys: ["elements_chimiques","inventions"] },
+];
+
+// ─── HOME ───────────────────────────────────────────────────────────────────
+function HomeView({ progress, onSelect, onReset }) {
+  const [filter, setFilter] = useState("all");
+
+  const filteredKeys = filter === "all"
+    ? Object.keys(CATEGORIES)
+    : (CAT_GROUPS.find(g => g.id === filter)?.keys || Object.keys(CATEGORIES));
+
+  // Global stats
+  const totalItems = Object.values(CATEGORIES).reduce((s, c) => s + c.items.length, 0);
+  const totalMastered = Object.entries(progress).reduce((s, [k, catP]) => {
+    return s + Object.values(catP).filter(p => p.streak >= 3).length;
+  }, 0);
+  const globalPct = totalItems > 0 ? Math.round((totalMastered / totalItems) * 100) : 0;
+
+  return (
+    <div style={{ maxWidth: 600, margin: "0 auto", padding: "24px 16px" }}>
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <h1 style={{
+          fontFamily: "'DM Serif Display', serif",
+          fontSize: 32,
+          color: COLORS.accent,
+          margin: 0,
+          letterSpacing: "-0.5px",
+        }}>
+          MémoMaster
+        </h1>
+        <p style={{ color: COLORS.textDim, fontSize: 13, marginTop: 6 }}>
+          {totalMastered} / {totalItems} items acquis · {globalPct}% global
+        </p>
+        {/* Global progress bar */}
+        <div style={{ height: 4, borderRadius: 2, background: COLORS.inputBg, marginTop: 10, maxWidth: 280, margin: "10px auto 0" }}>
+          <div style={{
+            height: "100%", borderRadius: 2,
+            width: `${globalPct}%`,
+            background: globalPct === 100 ? COLORS.green : `linear-gradient(90deg, ${COLORS.accent}, ${COLORS.orange})`,
+            transition: "width 0.5s ease",
+          }} />
+        </div>
+      </div>
+
+      {/* Filter tabs */}
+      <div style={{
+        display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4,
+        marginBottom: 16, scrollbarWidth: "none",
+      }}>
+        {CAT_GROUPS.map(g => (
+          <button
+            key={g.id}
+            onClick={() => setFilter(g.id)}
+            style={{
+              padding: "7px 14px", borderRadius: 20, whiteSpace: "nowrap",
+              background: filter === g.id ? COLORS.accent : COLORS.card,
+              color: filter === g.id ? COLORS.bg : COLORS.textDim,
+              border: filter === g.id ? "none" : `1px solid ${COLORS.border}`,
+              fontWeight: 600, fontSize: 12, cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+              transition: "all 0.2s",
+            }}
+          >
+            {g.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {filteredKeys.map(key => {
+          const cat = CATEGORIES[key];
+          if (!cat) return null;
+          const catProg = progress[key] || {};
+          const total = cat.items.length;
+          const mastered = Object.values(catProg).filter(p => p.streak >= 3).length;
+          const attempted = Object.keys(catProg).length;
+          const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+
+          return (
+            <div key={key} style={{
+              background: COLORS.card,
+              borderRadius: 12,
+              padding: 16,
+              border: `1px solid ${COLORS.border}`,
+              transition: "background 0.2s",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 22, marginBottom: 4 }}>{cat.icon}</div>
+                  <h3 style={{ margin: "0 0 2px 0", fontSize: 16, fontWeight: 600 }}>{cat.title}</h3>
+                  <p style={{ margin: 0, fontSize: 12, color: COLORS.textDim }}>{cat.description}</p>
+                </div>
+                <div style={{ textAlign: "right", minWidth: 70 }}>
+                  <div style={{
+                    fontSize: 24, fontWeight: 700,
+                    color: pct === 100 ? COLORS.green : pct > 50 ? COLORS.orange : COLORS.textDim,
+                    fontFamily: "'DM Serif Display', serif",
+                  }}>
+                    {pct}%
+                  </div>
+                  <div style={{ fontSize: 11, color: COLORS.textDim }}>
+                    {mastered}/{total} acquis
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div style={{
+                height: 4, borderRadius: 2, background: COLORS.inputBg, marginTop: 12, overflow: "hidden"
+              }}>
+                <div style={{
+                  height: "100%", borderRadius: 2,
+                  width: `${pct}%`,
+                  background: pct === 100 ? COLORS.green : `linear-gradient(90deg, ${COLORS.accent}, ${COLORS.orange})`,
+                  transition: "width 0.5s ease",
+                }} />
+              </div>
+
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button
+                  onClick={() => onSelect(key, "learn")}
+                  style={{
+                    flex: 1, padding: "10px 0", borderRadius: 8,
+                    background: COLORS.accent, color: COLORS.bg,
+                    border: "none", fontWeight: 600, fontSize: 13,
+                    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  Apprendre
+                </button>
+                <button
+                  onClick={() => onSelect(key, "test")}
+                  style={{
+                    flex: 1, padding: "10px 0", borderRadius: 8,
+                    background: "transparent", color: COLORS.accent,
+                    border: `1.5px solid ${COLORS.accent}`,
+                    fontWeight: 600, fontSize: 13,
+                    cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                  }}
+                >
+                  Tester
+                </button>
+                {attempted > 0 && (
+                  <button
+                    onClick={() => { if (window.confirm(`Réinitialiser la progression de "${cat.title}" ?`)) onReset(key); }}
+                    style={{
+                      padding: "10px 12px", borderRadius: 8,
+                      background: "transparent", color: COLORS.textDim,
+                      border: `1px solid ${COLORS.border}`,
+                      fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                    }}
+                    title="Réinitialiser"
+                  >
+                    ↺
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── LEARN (Flashcards with active recall) ──────────────────────────────────
+function LearnView({ catKey, category, progress, onUpdate, onBack }) {
+  const [items] = useState(() => {
+    // Prioritize items with low streak or never seen
+    const scored = category.items.map((item, idx) => {
+      const p = progress[idx];
+      const score = p ? (p.streak >= 3 ? 100 : p.streak * 20 - (p.attempts - p.correct) * 10) : -1;
+      return { item, idx, score };
+    });
+    scored.sort((a, b) => a.score - b.score);
+    return scored.map(s => ({ ...s }));
+  });
+
+  const [current, setCurrent] = useState(0);
+  const [input, setInput] = useState("");
+  const [result, setResult] = useState(null); // null | "exact" | "close" | "wrong"
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [stats, setStats] = useState({ correct: 0, wrong: 0 });
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (inputRef.current && !result) inputRef.current.focus();
+  }, [current, result]);
+
+  const currentItem = items[current];
+  if (!currentItem) return null;
+
+  const [question, answer] = currentItem.item;
+
+  const handleSubmit = () => {
+    if (!input.trim()) return;
+    const r = checkAnswer(input, answer);
+    setResult(r);
+    const isCorrect = r === "exact" || r === "close";
+    onUpdate(currentItem.idx, isCorrect);
+    setStats(s => ({
+      correct: s.correct + (isCorrect ? 1 : 0),
+      wrong: s.wrong + (isCorrect ? 0 : 1),
+    }));
+    if (!isCorrect) setShowAnswer(true);
+  };
+
+  const handleNext = () => {
+    setInput("");
+    setResult(null);
+    setShowAnswer(false);
+    setCurrent(c => c + 1);
+  };
+
+  const handleReveal = () => {
+    setResult("wrong");
+    setShowAnswer(true);
+    onUpdate(currentItem.idx, false);
+    setStats(s => ({ ...s, wrong: s.wrong + 1 }));
+  };
+
+  const finished = current >= items.length;
+
+  return (
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <button onClick={onBack} style={{
+          background: "none", border: "none", color: COLORS.textDim, fontSize: 14,
+          cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+        }}>← Retour</button>
+        <span style={{ fontSize: 13, color: COLORS.textDim }}>
+          {current + (finished ? 0 : 1)} / {items.length}
+        </span>
+        <div style={{ fontSize: 13 }}>
+          <span style={{ color: COLORS.green }}>✓ {stats.correct}</span>
+          {" "}
+          <span style={{ color: COLORS.red }}>✗ {stats.wrong}</span>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ height: 3, borderRadius: 2, background: COLORS.inputBg, marginBottom: 24 }}>
+        <div style={{
+          height: "100%", borderRadius: 2,
+          width: `${((current + (finished ? 0 : 0)) / items.length) * 100}%`,
+          background: COLORS.accent,
+          transition: "width 0.3s ease",
+        }} />
+      </div>
+
+      {finished ? (
+        <div style={{ textAlign: "center", paddingTop: 60 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>
+            {stats.correct > stats.wrong ? "🏆" : "📖"}
+          </div>
+          <h2 style={{ fontFamily: "'DM Serif Display', serif", color: COLORS.accent, marginBottom: 8 }}>
+            Session terminée
+          </h2>
+          <p style={{ color: COLORS.textDim, fontSize: 15 }}>
+            {stats.correct} bonnes réponses sur {stats.correct + stats.wrong}
+          </p>
+          <p style={{
+            fontSize: 36, fontWeight: 700,
+            color: stats.correct / (stats.correct + stats.wrong) > 0.7 ? COLORS.green : COLORS.orange,
+            margin: "16px 0",
+          }}>
+            {Math.round((stats.correct / Math.max(1, stats.correct + stats.wrong)) * 100)}%
+          </p>
+          <button onClick={onBack} style={{
+            marginTop: 20, padding: "12px 32px", borderRadius: 10,
+            background: COLORS.accent, color: COLORS.bg, border: "none",
+            fontWeight: 600, fontSize: 15, cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif",
+          }}>
+            Retour au menu
+          </button>
+        </div>
+      ) : (
+        <div style={{
+          background: COLORS.card, borderRadius: 16, padding: 28,
+          border: `1px solid ${COLORS.border}`,
+        }}>
+          <p style={{ fontSize: 11, color: COLORS.textDim, margin: "0 0 6px 0", textTransform: "uppercase", letterSpacing: 1.5 }}>
+            {category.title}
+          </p>
+          <div style={{
+            fontSize: 28, fontFamily: "'DM Serif Display', serif",
+            color: COLORS.accent, marginBottom: 24, lineHeight: 1.3,
+          }}>
+            {question}
+          </div>
+
+          {!result ? (
+            <div>
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleSubmit(); }}
+                placeholder="Ta réponse…"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  padding: "14px 16px", borderRadius: 10,
+                  background: COLORS.inputBg, border: `1.5px solid ${COLORS.border}`,
+                  color: COLORS.text, fontSize: 16, fontFamily: "'DM Sans', sans-serif",
+                  outline: "none",
+                }}
+              />
+              <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                <button onClick={handleSubmit} style={{
+                  flex: 1, padding: "12px 0", borderRadius: 10,
+                  background: COLORS.accent, color: COLORS.bg, border: "none",
+                  fontWeight: 600, fontSize: 15, cursor: "pointer",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}>
+                  Valider
+                </button>
+                <button onClick={handleReveal} style={{
+                  padding: "12px 20px", borderRadius: 10,
+                  background: "transparent", color: COLORS.textDim,
+                  border: `1px solid ${COLORS.border}`,
+                  fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                }}>
+                  Voir la réponse
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div style={{
+                padding: "14px 18px", borderRadius: 10, marginBottom: 14,
+                background: result === "exact" ? COLORS.greenDim
+                  : result === "close" ? "#3b2f00"
+                  : COLORS.redDim,
+                border: `1.5px solid ${result === "exact" ? COLORS.green
+                  : result === "close" ? COLORS.orange
+                  : COLORS.red}`,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4,
+                  color: result === "exact" ? COLORS.green : result === "close" ? COLORS.orange : COLORS.red,
+                }}>
+                  {result === "exact" ? "✓ Correct !" : result === "close" ? "≈ Presque !" : "✗ Incorrect"}
+                </div>
+                {result !== "exact" && (
+                  <div style={{ fontSize: 13, color: COLORS.textDim }}>
+                    Ta réponse : <span style={{ color: COLORS.text }}>{input || "(vide)"}</span>
+                  </div>
+                )}
+              </div>
+
+              {showAnswer && (
+                <div style={{
+                  padding: "14px 18px", borderRadius: 10, marginBottom: 14,
+                  background: COLORS.inputBg, border: `1px solid ${COLORS.border}`,
+                }}>
+                  <div style={{ fontSize: 11, color: COLORS.textDim, marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>
+                    Réponse correcte
+                  </div>
+                  <div style={{
+                    fontSize: 18, fontWeight: 600, color: COLORS.accent,
+                    fontFamily: "'DM Serif Display', serif",
+                  }}>
+                    {answer}
+                  </div>
+                </div>
+              )}
+
+              <button onClick={handleNext} style={{
+                width: "100%", padding: "12px 0", borderRadius: 10,
+                background: COLORS.accent, color: COLORS.bg, border: "none",
+                fontWeight: 600, fontSize: 15, cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+              }}>
+                Suivant →
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TEST (Timed quiz) ──────────────────────────────────────────────────────
+function TestView({ catKey, category, progress, onUpdate, onBack }) {
+  const [mode, setMode] = useState("setup"); // setup | running | done
+  const [count, setCount] = useState(20);
+  const [items, setItems] = useState([]);
+  const [current, setCurrent] = useState(0);
+  const [input, setInput] = useState("");
+  const [results, setResults] = useState([]);
+  const [timer, setTimer] = useState(0);
+  const timerRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const maxCount = category.items.length;
+
+  const startTest = () => {
+    const n = Math.min(count, maxCount);
+    const shuffled = shuffle(category.items.map((item, idx) => ({ item, idx })));
+    setItems(shuffled.slice(0, n));
+    setResults([]);
+    setCurrent(0);
+    setInput("");
+    setTimer(0);
+    setMode("running");
+    timerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
+  };
+
+  useEffect(() => {
+    if (mode === "running" && inputRef.current) inputRef.current.focus();
+  }, [mode, current]);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const handleSubmit = () => {
+    if (!input.trim()) return;
+    const { item, idx } = items[current];
+    const r = checkAnswer(input, item[1]);
+    const isCorrect = r === "exact" || r === "close";
+    onUpdate(idx, isCorrect);
+    setResults(prev => [...prev, { question: item[0], answer: item[1], userAnswer: input, result: r }]);
+    setInput("");
+
+    if (current + 1 >= items.length) {
+      clearInterval(timerRef.current);
+      setMode("done");
+    } else {
+      setCurrent(c => c + 1);
+    }
+  };
+
+  const handleSkip = () => {
+    const { item, idx } = items[current];
+    onUpdate(idx, false);
+    setResults(prev => [...prev, { question: item[0], answer: item[1], userAnswer: "", result: "skipped" }]);
+    setInput("");
+    if (current + 1 >= items.length) {
+      clearInterval(timerRef.current);
+      setMode("done");
+    } else {
+      setCurrent(c => c + 1);
+    }
+  };
+
+  const formatTime = (s) => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+
+  if (mode === "setup") {
+    return (
+      <div style={{ maxWidth: 420, margin: "0 auto", padding: "24px 16px" }}>
+        <button onClick={onBack} style={{
+          background: "none", border: "none", color: COLORS.textDim, fontSize: 14,
+          cursor: "pointer", fontFamily: "'DM Sans', sans-serif", marginBottom: 24,
+        }}>← Retour</button>
+
+        <div style={{
+          background: COLORS.card, borderRadius: 16, padding: 28,
+          border: `1px solid ${COLORS.border}`, textAlign: "center",
+        }}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>{category.icon}</div>
+          <h2 style={{ fontFamily: "'DM Serif Display', serif", color: COLORS.accent, margin: "0 0 8px 0" }}>
+            Test : {category.title}
+          </h2>
+          <p style={{ color: COLORS.textDim, fontSize: 13, margin: "0 0 24px 0" }}>
+            {category.description}
+          </p>
+
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ fontSize: 13, color: COLORS.textDim, display: "block", marginBottom: 8 }}>
+              Nombre de questions
+            </label>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
+              <button onClick={() => setCount(c => Math.max(5, c - 5))} style={{
+                width: 36, height: 36, borderRadius: 8, border: `1px solid ${COLORS.border}`,
+                background: COLORS.inputBg, color: COLORS.text, fontSize: 18, cursor: "pointer",
+              }}>−</button>
+              <span style={{ fontSize: 28, fontWeight: 700, color: COLORS.accent, minWidth: 50 }}>
+                {Math.min(count, maxCount)}
+              </span>
+              <button onClick={() => setCount(c => Math.min(maxCount, c + 5))} style={{
+                width: 36, height: 36, borderRadius: 8, border: `1px solid ${COLORS.border}`,
+                background: COLORS.inputBg, color: COLORS.text, fontSize: 18, cursor: "pointer",
+              }}>+</button>
+            </div>
+            <div style={{ fontSize: 11, color: COLORS.textDim, marginTop: 6 }}>
+              sur {maxCount} disponibles
+            </div>
+          </div>
+
+          <button onClick={startTest} style={{
+            padding: "14px 40px", borderRadius: 10,
+            background: COLORS.accent, color: COLORS.bg, border: "none",
+            fontWeight: 700, fontSize: 16, cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif",
+          }}>
+            Lancer le test
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === "running") {
+    const { item } = items[current];
+    return (
+      <div style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <span style={{ fontSize: 13, color: COLORS.textDim }}>
+            {current + 1} / {items.length}
+          </span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: COLORS.accent, fontFamily: "'DM Serif Display', serif" }}>
+            {formatTime(timer)}
+          </span>
+        </div>
+
+        <div style={{ height: 3, borderRadius: 2, background: COLORS.inputBg, marginBottom: 28 }}>
+          <div style={{
+            height: "100%", borderRadius: 2, width: `${(current / items.length) * 100}%`,
+            background: COLORS.accent, transition: "width 0.3s ease",
+          }} />
+        </div>
+
+        <div style={{
+          background: COLORS.card, borderRadius: 16, padding: 28,
+          border: `1px solid ${COLORS.border}`,
+        }}>
+          <p style={{ fontSize: 11, color: COLORS.textDim, margin: "0 0 6px 0", textTransform: "uppercase", letterSpacing: 1.5 }}>
+            {category.title}
+          </p>
+          <div style={{
+            fontSize: 28, fontFamily: "'DM Serif Display', serif",
+            color: COLORS.accent, marginBottom: 24, lineHeight: 1.3,
+          }}>
+            {item[0]}
+          </div>
+
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") handleSubmit(); }}
+            placeholder="Ta réponse…"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            style={{
+              width: "100%", boxSizing: "border-box",
+              padding: "14px 16px", borderRadius: 10,
+              background: COLORS.inputBg, border: `1.5px solid ${COLORS.border}`,
+              color: COLORS.text, fontSize: 16, fontFamily: "'DM Sans', sans-serif",
+              outline: "none",
+            }}
+          />
+
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <button onClick={handleSubmit} style={{
+              flex: 1, padding: "12px 0", borderRadius: 10,
+              background: COLORS.accent, color: COLORS.bg, border: "none",
+              fontWeight: 600, fontSize: 15, cursor: "pointer",
+              fontFamily: "'DM Sans', sans-serif",
+            }}>
+              Valider
+            </button>
+            <button onClick={handleSkip} style={{
+              padding: "12px 20px", borderRadius: 10,
+              background: "transparent", color: COLORS.textDim,
+              border: `1px solid ${COLORS.border}`,
+              fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+            }}>
+              Passer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // mode === "done"
+  const correct = results.filter(r => r.result === "exact" || r.result === "close").length;
+  const pct = Math.round((correct / results.length) * 100);
+
+  return (
+    <div style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px" }}>
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontSize: 48, marginBottom: 8 }}>
+          {pct >= 90 ? "🏆" : pct >= 70 ? "💪" : pct >= 50 ? "📖" : "🔄"}
+        </div>
+        <h2 style={{ fontFamily: "'DM Serif Display', serif", color: COLORS.accent, margin: "0 0 4px 0" }}>
+          Résultat : {pct}%
+        </h2>
+        <p style={{ color: COLORS.textDim, fontSize: 14, margin: 0 }}>
+          {correct}/{results.length} en {formatTime(timer)}
+        </p>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 24 }}>
+        {results.map((r, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "10px 14px", borderRadius: 8,
+            background: r.result === "exact" || r.result === "close" ? COLORS.greenDim : COLORS.redDim,
+            border: `1px solid ${r.result === "exact" || r.result === "close" ? COLORS.green + "40" : COLORS.red + "40"}`,
+          }}>
+            <span style={{
+              fontSize: 14,
+              color: r.result === "exact" || r.result === "close" ? COLORS.green : COLORS.red,
+              flexShrink: 0,
+            }}>
+              {r.result === "exact" || r.result === "close" ? "✓" : "✗"}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>
+                {r.question}
+              </div>
+              <div style={{ fontSize: 12, color: COLORS.textDim }}>
+                {r.answer}
+                {r.result !== "exact" && r.result !== "close" && r.userAnswer && (
+                  <span style={{ color: COLORS.red, marginLeft: 8 }}>
+                    (toi : {r.userAnswer})
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={() => { setMode("setup"); setCount(Math.min(count, maxCount)); }} style={{
+          flex: 1, padding: "12px 0", borderRadius: 10,
+          background: COLORS.accent, color: COLORS.bg, border: "none",
+          fontWeight: 600, fontSize: 15, cursor: "pointer",
+          fontFamily: "'DM Sans', sans-serif",
+        }}>
+          Recommencer
+        </button>
+        <button onClick={onBack} style={{
+          flex: 1, padding: "12px 0", borderRadius: 10,
+          background: "transparent", color: COLORS.accent,
+          border: `1.5px solid ${COLORS.accent}`,
+          fontWeight: 600, fontSize: 15, cursor: "pointer",
+          fontFamily: "'DM Sans', sans-serif",
+        }}>
+          Menu
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(MemoApp));
+
+</script>
+</body>
+</html>
